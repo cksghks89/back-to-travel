@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.enjoytrip.model.mapper.AttractionMapper">
+    <select id="selectItem" parameterType="int" resultType="attraction">
+        select ai.contentId, ai.contentTypeId, ai.title, ai.addr1, ai.addr2, ai.firstImage, ai.firstImage2,
+        ai.readCount, ai.sidoCode, ai.gugunCode, ad.overview
+        from attraction_info ai
+        join attraction_description ad on ai.contentId = ad.contentId
+        <if test="typeId != 0">
+            where contentTypeId = #{typeId}
+        </if>
+        order by ai.readCount desc
+        limit 2;
+    </select>
+
+    <select id="selectAttractionList" parameterType="page" resultType="attraction">
+        select contentId,
+        contentTypeId,
+        title,
+        addr1,
+        addr2,
+        zipCode,
+        firstImage,
+        readCount
+        from attraction_info
+        where contentId is not null
+        <if test="type != 0">
+            and contentTypeId = #{type}
+        </if>
+        <if test="query != null and query != ''">
+            and title like concat('%', #{query}, '%')
+        </if>
+        order by readCount desc
+        limit #{begin}, #{listSize}
+    </select>
+
+    <select id="selectAttractionCount" parameterType="page" resultType="int">
+        select count(*)
+        from attraction_info
+        where contentId is not null
+        <if test="type != 0">
+            and contentTypeId = #{type}
+        </if>
+        <if test="query != null and query != ''">
+            and title like concat('%', #{query}, '%')
+        </if>
+    </select>
+
+    <select id="selectAttractionLike" parameterType="attractionLike" resultType="attractionLike">
+        select *
+        from attraction_like
+        where userId = #{userId}
+          and contentId = #{contentId}
+    </select>
+
+    <insert id="insertLike" parameterType="attractionLike">
+        insert into attraction_like (contentId, userId)
+        values (#{contentId}, #{userId})
+    </insert>
+
+    <insert id="insertPlanCopy" parameterType="plan" useGeneratedKeys="true" keyProperty="planId">
+        insert into plan(userId, title, open, parentId)
+        values (#{userId}, #{title}, #{open}, #{planId})
+    </insert>
+
+
+    <delete id="deleteLike" parameterType="attractionLike">
+        delete
+        from attraction_like
+        where contentId = #{contentId}
+          and userId = #{userId}
+    </delete>
+
+    <select id="selectAttraction" parameterType="string" resultType="attraction">
+        select ai.*, ad.overview
+        from attraction_info ai
+                 join attraction_description ad on ai.contentId = ad.contentId
+        where ai.contentId = #{contentId}
+    </select>
+
+    <select id="selectSido" resultType="sido">
+        select sidoCode, sidoName
+        from sido;
+    </select>
+
+    <select id="selectGugun" resultType="gugun" parameterType="int">
+        select gugunCode, gugunName, sidoCode
+        from gugun
+        where sidoCode = #{sidoCode}
+    </select>
+
+    <select id="selectAttractionByQuerySearch" parameterType="searchDto" resultType="attraction">
+        select ai.*, ad.overview
+        from attraction_info ai
+        join attraction_description ad on ai.contentId = ad.contentId
+        where title like concat('%', #{query}, '%')
+        <if test="sidoCode != null and sidoCode != 0">
+            and sidoCode = #{sidoCode}
+        </if>
+        <if test="gugunCode != null and gugunCode != 0">
+            and gugunCode = #{gugunCode}
+        </if>
+        <if test="contentTypeId != null and contentTypeId != 0">
+            and contentTypeId = #{contentTypeId}
+        </if>
+        limit 0, 150
+    </select>
+
+    <select id="selectAttractionByLocationSearch" parameterType="searchDto" resultType="attraction">
+        select ai.*, ad.overview
+        from attraction_info ai
+                 join attraction_description ad on ai.contentId = ad.contentId
+        where (ST_DISTANCE_SPHERE(point(#{lng}, #{lat}), point(longitude, latitude))) &lt; 3000.0
+        limit 0, 150
+    </select>
+
+    <insert id="insertPlan" parameterType="plan">
+        insert into plan (userId, title)
+        values (#{userId}, #{title})
+    </insert>
+
+    <select id="selectPlanIdByUserId" parameterType="plan" resultType="int">
+        select planId
+        from plan
+        where userId = #{userId}
+          and title = #{title}
+        order by planId desc
+        limit 0, 1;
+    </select>
+
+    <select id="selectAttractionListByUserId" parameterType="string" resultType="attraction">
+        select ai.*
+        from attraction_like al
+                 join attraction_info ai on al.contentId = ai.contentId
+        where userId = #{userId}
+    </select>
+
+    <insert id="insertPlanSequence" parameterType="map">
+        insert into planSequence (planId, contentId, sequence)
+        values (#{planId}, #{contentId}, #{sequence})
+    </insert>
+
+    <select id="selectPlanList" parameterType="page" resultMap="planListMap">
+        select *
+        from plan
+    </select>
+
+    <select id="selectPlanListByUserId" parameterType="string" resultMap="planListMap">
+        select *
+        from plan
+        where userId = #{userId}
+    </select>
+
+    <select id="selectHeart" parameterType="attractionLike" resultType="int">
+        select count(*)
+        from attraction_like
+        where contentId = #{contentId}
+    </select>
+
+    <resultMap id="planListMap" type="plan">
+        <result property="planId" column="planId"/>
+        <result property="userId" column="userId"/>
+        <result property="title" column="title"/>
+        <collection property="planSequence" column="planId" ofType="planSequence" select="selectPlanSequence"/>
+    </resultMap>
+
+    <select id="selectPlanSequence" parameterType="int" resultType="planSequence">
+        select *
+        from planSequence
+        where planId = #{planId}
+        order by sequence;
+    </select>
+
+    <select id="selectPlanDetail" parameterType="int" resultMap="planListMap">
+        select *
+        from plan
+        where planId = #{planId}
+    </select>
+
+    <delete id="deletePlan" parameterType="int">
+        delete
+        from plan
+        where planId = #{planId}
+    </delete>
+    
+    <select id="selectWishCount" parameterType="int" resultType="int">
+        select count(*)
+        from plan
+        where parentId = #{planId}
+          and planId != parentId
+    </select>
+</mapper>

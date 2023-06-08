@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.enjoytrip.model.mapper.MemberMapper">
+    <select id="selectUser" parameterType="user" resultType="user">
+        select *
+        from member
+        where userId = #{userId}
+          and password = #{password}
+    </select>
+
+    <select id="selectUserById" parameterType="string" resultType="user">
+        select *
+        from member
+        where userId = #{userId}
+    </select>
+
+    <insert id="insertUser" parameterType="user">
+        insert into member (userId, email, password, nickName, gender, emailAuth, profileImage)
+        values (#{userId}, #{email}, #{password}, #{nickName}, #{gender}, #{emailAuth}, #{profileImage})
+    </insert>
+
+    <insert id="insertEmailAuth" parameterType="emailAuth">
+        insert into email_auth (userId, email, uuid, expired)
+        values (#{userId}, #{email}, #{uuid}, date_add(now(), interval 7 day))
+    </insert>
+
+    <select id="selectEmailAuth" parameterType="emailAuth" resultType="emailAuth">
+        select userId, email, uuid, expired
+        from email_auth
+        where userId = #{userId}
+    </select>
+
+    <delete id="deleteEmailAuth" parameterType="string">
+        delete
+        from email_auth
+        where userId = #{userId}
+    </delete>
+
+    <update id="updateUserAuth" parameterType="string">
+        update member
+        set emailAuth = true
+        where userId = #{userId}
+    </update>
+
+    <select id="selectUserByIdAndEmail" parameterType="user" resultType="user">
+        select userId, email
+        from member
+        where userId = #{userId}
+          and email = #{email}
+    </select>
+
+    <select id="selectUserByNickName" parameterType="map" resultType="int">
+        select count(*)
+        from member
+        where nickName = #{nickName}
+          and userId != #{userId}
+    </select>
+
+    <update id="updateUserPassword" parameterType="user">
+        update member
+        set password = #{password}
+        where userId = #{userId}
+    </update>
+    <update id="updateUser" parameterType="user">
+        update member
+        set nickName = #{nickName},
+            gender   = #{gender}
+        where userId = #{userId}
+
+
+    </update>
+    <delete id="deleteUser" parameterType="string">
+        delete
+        from member
+        where userId = #{userId}
+    </delete>
+
+    <insert id="insertLog" parameterType="loginLog">
+        insert into user_log (userId, loginTime, result)
+        values (#{userId}, now(), #{result})
+    </insert>
+
+    <select id="selectUserLog" resultType="loginLog">
+        select *
+        from user_log;
+    </select>
+
+    <select id="selectUserList" resultType="user">
+        select *
+        from member;
+    </select>
+</mapper>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.enjoytrip.model.mapper.BoardMapper">
+    <select id="selectBoardList" parameterType="page" resultType="board">
+        SELECT *
+        FROM board
+
+        <if test="query != null and query.equals('')">
+            WHERE title LIKE CONCAT('%', #{query}, '%')
+
+            OR content LIKE CONCAT('%', #{query}, '%')
+        </if>
+        ORDER BY boardId DESC
+        LIMIT #{begin}, #{listSize}
+    </select>
+
+    <delete id="deleteBoard">
+        DELETE
+        FROM board
+        WHERE boardId = #{boardId}
+    </delete>
+
+    <update id="updateBoard">
+        UPDATE board
+        SET title   = #{title},
+            content = #{content}
+        WHERE boardId = #{boardId}
+    </update>
+
+    <select id="selectBoardDetail" resultType="board">
+        SELECT *
+        FROM board
+        WHERE boardId = #{boardId}
+    </select>
+
+    <insert id="insertBoard">
+        INSERT INTO board (userId, title, content)
+        VALUES (#{userId}, #{title}, #{content})
+    </insert>
+    <select id="selectBoardListCount" resultType="int" parameterType="page">
+        select count(*)
+        from board
+        <if test="query != null and !query.equals('')">
+            WHERE title LIKE CONCAT('%', #{query}, '%')
+            OR content LIKE CONCAT('%', #{query}, '%')
+        </if>
+    </select>
+</mapper>
